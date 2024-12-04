@@ -25,6 +25,7 @@ public class PersonService {
     }
 
     public void addPerson(Person person) {
+        System.err.println(person.getFirstName());
         personDao.save(person);
     }
 }
