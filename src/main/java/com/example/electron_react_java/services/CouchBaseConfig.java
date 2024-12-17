@@ -67,7 +67,7 @@ public class CouchBaseConfig {
                 new URLEndpoint(new URI(uri)))
                 .addCollection(collection, collConfig)
                 .setType(ReplicatorType.PUSH_AND_PULL)
-                .setAuthenticator(new BasicAuthenticator("sync-gateway", "password".toCharArray()));
+                .setAuthenticator(new BasicAuthenticator("username", "password".toCharArray()));
 
         Replicator repl = new Replicator(replConfig);
 

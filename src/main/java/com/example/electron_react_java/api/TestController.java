@@ -62,9 +62,16 @@ public class TestController {
         String greeting = "sincronizando";
         CouchBaseConfig base = new CouchBaseConfig();
         Collection collection = base.getCollection();
-
-        base.startRepl("conxion con la base de datos", collection);
-        return new ResponseEntity<>(greeting, HttpStatus.OK);
+        try {
+            // Intentar iniciar la replicación
+            base.startRepl("ws://localhost:4984/pruebas", collection);
+            // Si se inicia correctamente, devolver éxito
+            return new ResponseEntity<>("Replication started successfully", HttpStatus.OK);
+        } catch (Exception e) {
+            // Manejar cualquier excepción lanzada y devolver un error con detalle
+            String errorMessage = "Failed to start replication: " + e.getMessage();
+            return new ResponseEntity<>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
 }

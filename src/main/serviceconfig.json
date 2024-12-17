@@ -1,0 +1,35 @@
+{
+  "disable_persistent_config": true,
+  "logging": {
+    "console": {
+      "log_keys": [
+        "*"
+      ]
+    }
+  },
+  "use_tls_server": false,
+  "databases": {
+    "db": {
+      "server": "couchbase://localhost",
+      "username": "sync-gateway",
+      "password": "password",
+      "bucket": "getting-started",
+      "users": {
+        "username": {
+          "password": "password",
+          "admin_channels": [
+            "*"
+          ]
+        },
+        "GUEST": {
+          "disabled": false,
+          "admin_channels": [
+            "*"
+          ]
+        }
+      },
+      "allow_conflicts": false,
+      "num_index_replicas": 0 
+    }
+  }
+}
