@@ -8,12 +8,12 @@ import java.util.List;
 import java.util.Map;
 
 public class CouchBaseService {
-    public static List<Map<String, Object>> viewDatabase() throws CouchbaseLiteException {
+    public static List<Map<String, Object>> viewDatabase(String scopeName,String collectionName) throws CouchbaseLiteException {
         CouchbaseLite.init();
         List<Map<String, Object>> documents = new ArrayList<>();
 
         try (Database database = new Database("mydb")) {
-            Collection collection = database.getCollection("myCollection", "myScope");
+            Collection collection = database.getCollection(collectionName, scopeName);
 
             if (collection != null) {
                 Query query = QueryBuilder.select(SelectResult.all()).from(DataSource.collection(collection));
@@ -36,11 +36,11 @@ public class CouchBaseService {
         return documents;
     }
 
-    public static void insertDocument(Map<String, Object> data) throws CouchbaseLiteException {
+    public static void insertDocument(Map<String, Object> data,String scopeName,String collectionName) throws CouchbaseLiteException {
         CouchbaseLite.init();
 
         try (Database database = new Database("mydb")) {
-            Collection collection = database.getCollection("myCollection", "myScope");
+            Collection collection = database.getCollection(collectionName, scopeName);
 
             if (collection != null) {
                 MutableDocument mutableDoc = new MutableDocument()

@@ -18,7 +18,7 @@ public class CouchBaseConfig {
         System.out.println("Database created: mydb");
 
         // Create a new collection (like a SQL table) in the database.
-        Collection collection = database.createCollection("myCollection", "myScope");
+        Collection collection = database.createCollection("pruebas", "zkymed");
         System.out.println("Collection created: " + collection);
 
         // Create a new document (i.e. a record)
@@ -59,15 +59,66 @@ public class CouchBaseConfig {
         System.out.println("Finish process");
     }
 
+    public void getStartedOnline() throws CouchbaseLiteException, URISyntaxException {
+        // One-off initialization
+        CouchbaseLite.init();
+        System.out.println("CBL Initialized");
+
+        // Create a database
+        Database database = new Database("mydb");
+        System.out.println("Database created: mydb");
+
+        // Create a new collection (like a SQL table) in the database.
+        Collection collection = database.createCollection("hotel", "inventory");
+        System.out.println("Collection created: " + collection);
+
+        // Create a new document (i.e. a record)
+        // and save it in a collection in the database.
+        MutableDocument mutableDoc = new MutableDocument()
+                .setString("version", "2.0")
+                .setString("language", "Java");
+        collection.save(mutableDoc);
+
+        // Retrieve immutable document and log the database generated
+        // document ID and some document properties
+        Document document = collection.getDocument(mutableDoc.getId());
+        if (document == null) {
+            System.out.println("No such document :: " + mutableDoc.getId());
+        } else {
+            System.out.println("Document ID :: " + document.getId());
+            System.out.println("Learning :: " + document.getString("language"));
+        }
+
+        // Retrieve and update a document.
+        document = collection.getDocument(mutableDoc.getId());
+        if (document != null) {
+            collection.save(document.toMutable().setString("language", "Kotlin"));
+        }
+
+        // Create a query to fetch documents with language == "Kotlin"
+        Query query = QueryBuilder.select(SelectResult.all())
+                .from(DataSource.collection(collection))
+                .where(Expression.property("language")
+                        .equalTo(Expression.string("Kotlin")));
+
+        try (ResultSet rs = query.execute()) {
+            System.out.println("Number of rows :: " + rs.allResults().size());
+        }
+    }
+
     public Replicator startRepl(String uri, Collection collection) throws URISyntaxException {
-        CollectionConfiguration collConfig = new CollectionConfiguration()
-                .setPullFilter((doc, flags) -> "Java".equals(doc.getString("language")));
+        CollectionConfiguration collConfig = new CollectionConfiguration() //configuracion de los filtros de sync push y pull
+                .setPullFilter((doc, flags) -> {
+                    Boolean syncValue = doc.getBoolean("sync");
+                    return syncValue == null || syncValue;
+                });
 
         ReplicatorConfiguration replConfig = new ReplicatorConfiguration(
                 new URLEndpoint(new URI(uri)))
                 .addCollection(collection, collConfig)
+                //.addCollections(collection, collConfig)
                 .setType(ReplicatorType.PUSH_AND_PULL)
-                .setAuthenticator(new BasicAuthenticator("username", "password".toCharArray()));
+                .setAuthenticator(new BasicAuthenticator("syncUser", "Abc1234/".toCharArray()));
 
         Replicator repl = new Replicator(replConfig);
 
@@ -85,7 +136,13 @@ public class CouchBaseConfig {
 
     public Collection getCollection() throws CouchbaseLiteException {
         Database database = new Database("mydb");
-        return database.createCollection("myCollection", "myScope");
+        return database.createCollection("pruebas", "zkymed");
+    }
+
+    public Collection getCollectionOnline() throws CouchbaseLiteException {
+        Database database = new Database("mydb");
+        System.out.println("hotel");
+        return database.getCollection("hotel", "inventory");
     }
 
 }
