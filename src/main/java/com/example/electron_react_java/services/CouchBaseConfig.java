@@ -2,7 +2,6 @@ package com.example.electron_react_java.services;
 
 import com.couchbase.lite.*;
 
-import javax.xml.crypto.Data;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -106,32 +105,52 @@ public class CouchBaseConfig {
         }
     }
 
-    public Replicator startRepl(String uri, Collection collection) throws URISyntaxException {
-        CollectionConfiguration collConfig = new CollectionConfiguration() //configuracion de los filtros de sync push y pull
-                .setPullFilter((doc, flags) -> {
-                    Boolean syncValue = doc.getBoolean("sync");
-                    return syncValue == null || syncValue;
-                });
+    public void startRepl(String uri, Collection collection) throws URISyntaxException {
+        CollectionConfiguration collConfig = new CollectionConfiguration();
+                /*.setPullFilter((doc, flags) -> {
+                       return (Boolean) doc.getBoolean("sync");
+                });*/
 
         ReplicatorConfiguration replConfig = new ReplicatorConfiguration(
                 new URLEndpoint(new URI(uri)))
                 .addCollection(collection, collConfig)
-                //.addCollections(collection, collConfig)
                 .setType(ReplicatorType.PUSH_AND_PULL)
                 .setAuthenticator(new BasicAuthenticator("syncUser", "Abc1234/".toCharArray()));
 
         Replicator repl = new Replicator(replConfig);
 
         // Listen to replicator change events.
-        // Use `token.remove()` to stop the listener
-        ListenerToken token = repl.addChangeListener(change -> {
+        repl.addChangeListener(change -> {
             System.out.println("Replicator state :: " + change.getStatus().getActivityLevel());
+
+            if (change.getStatus().getError() != null) {
+                System.err.println("Replication error: " + change.getStatus().getError());
+            }
+
+            // Imprimir los documentos cuando el estado sea "STOPPED" o "IDLE" (replicación completa o en pausa).
+            if (change.getStatus().getActivityLevel() == ReplicatorActivityLevel.IDLE || change.getStatus().getActivityLevel() == ReplicatorActivityLevel.STOPPED) {
+                printAllDocuments(collection);
+            }
         });
 
         // Start replication.
         repl.start();
 
-        return repl;
+    }
+
+    private void printAllDocuments(Collection collection) {
+        // Crear una consulta para seleccionar todos los documentos
+        Query query = QueryBuilder.select(SelectResult.all())
+                .from(DataSource.collection(collection));
+
+        try {
+            ResultSet resultSet = query.execute();
+            for (Result result : resultSet) {
+                System.out.println(result.toMap());
+            }
+        } catch (Exception e) {
+            System.err.println("Error al consultar los documentos: " + e.getMessage());
+        }
     }
 
     public Collection getCollection() throws CouchbaseLiteException {
