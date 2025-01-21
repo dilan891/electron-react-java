@@ -75,10 +75,12 @@ public class TestController {
     }
 
     @GetMapping("/testSyncOnline")
-    public ResponseEntity<String> greeting7() throws CouchbaseLiteException, URISyntaxException {
+    public ResponseEntity<String> greeting7(@RequestBody CollectioNames names) throws CouchbaseLiteException, URISyntaxException {
         String greeting = "sincronizando";
+        String scopeName = names.getScopeName();
+        String collectionName = names.getCollectionName();
         CouchBaseConfig base = new CouchBaseConfig();
-        Collection collection = base.getCollectionOnline();
+        Collection collection = base.getCollectionOnline(collectionName,scopeName);
         try {
             // Intentar iniciar la replicación
             String uriService = "wss://enfl0gmtoy6qlunr.apps.cloud.couchbase.com:4984/test";
@@ -124,13 +126,48 @@ public class TestController {
         }
     }
 
-    @GetMapping("/getHotelDocumentsOnline")
-    public ResponseEntity<List<Map<String, Object>> > greeting9() throws CouchbaseLiteException, URISyntaxException {
-        String greeting = "Obteniendo documentos";
+    @GetMapping("/createUser")
+    public ResponseEntity<String> greeting10() throws CouchbaseLiteException, URISyntaxException {
+        String greeting = "Creando usuario";
+        CouchBaseConfig base = new CouchBaseConfig();
+        try {
+            // Intentar iniciar la replicación
+            //base.createUser();
+            // Si se inicia correctamente, devolver éxito
+            return new ResponseEntity<>("User created successfully", HttpStatus.OK);
+        } catch (Exception e) {
+            // Manejar cualquier excepción lanzada y devolver un error con detalle
+            String errorMessage = "Failed to create user: " + e.getMessage();
+            return new ResponseEntity<>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Retorna los documentos de la base de datos
+     * @param names Objeto con el nombre del scope y la colección
+     * */
+    @GetMapping("/getDocumentsOnline")
+    public ResponseEntity<List<Map<String, Object>> > greeting9(@RequestBody CollectioNames names) throws CouchbaseLiteException, URISyntaxException {
+        String scopeName = names.getScopeName();
+        String collectionName = names.getCollectionName();
         CouchBaseService service = new CouchBaseService();
-        List<Map<String, Object>> data = service.viewDatabase("inventory","hotel");
+        List<Map<String, Object>> data = service.viewDatabase(scopeName,collectionName);
 
         return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
+    /**
+     * Inserta un documento en la base de datos
+     * */
+    @PostMapping("/insertDocumentOnline")
+    public ResponseEntity<String> greeting11(@RequestBody TestData data) throws CouchbaseLiteException {
+        CouchBaseService service = new CouchBaseService();
+        String scopeName = data.getNames().getScopeName();
+        String collectionName = data.getNames().getCollectionName();
+        service.insertDocument(data.toMap(),scopeName,collectionName);
+
+        String greeting = "Documento insertado en " + scopeName;
+        return new ResponseEntity<>(greeting, HttpStatus.OK);
     }
 
 }

@@ -1,9 +1,12 @@
 package com.example.electron_react_java.models;
 
+import com.example.electron_react_java.api.CollectioNames;
+
 import java.util.HashMap;
 import java.util.Map;
 
 public class TestData {
+    private CollectioNames names;
     private String name;
     private int age;
 
@@ -13,6 +16,10 @@ public class TestData {
     public void MyData(String name, int age) {
         this.name = name;
         this.age = age;
+    }
+
+    public CollectioNames getNames() {
+        return names;
     }
 
     public String getName() {

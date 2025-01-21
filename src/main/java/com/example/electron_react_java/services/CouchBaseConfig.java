@@ -58,6 +58,11 @@ public class CouchBaseConfig {
         System.out.println("Finish process");
     }
 
+    /**
+     * Crea la base de datos y la coleccion local
+     * @throws CouchbaseLiteException
+     * @throws URISyntaxException
+     */
     public void getStartedOnline() throws CouchbaseLiteException, URISyntaxException {
         // One-off initialization
         CouchbaseLite.init();
@@ -74,6 +79,7 @@ public class CouchBaseConfig {
         // Create a new document (i.e. a record)
         // and save it in a collection in the database.
         MutableDocument mutableDoc = new MutableDocument()
+                //Datos creados de prueba
                 .setString("version", "2.0")
                 .setString("language", "Java");
         collection.save(mutableDoc);
@@ -106,10 +112,11 @@ public class CouchBaseConfig {
     }
 
     public void startRepl(String uri, Collection collection) throws URISyntaxException {
-        CollectionConfiguration collConfig = new CollectionConfiguration();
-                /*.setPullFilter((doc, flags) -> {
-                       return (Boolean) doc.getBoolean("sync");
-                });*/
+        CollectionConfiguration collConfig = new CollectionConfiguration()
+                .setPullFilter((doc, flags) -> {
+                       // Filtra solo los documentos que tengan type == "TestData"
+                          return doc.getString("type") != null && doc.getString("type").equals("TestData");
+                });
 
         ReplicatorConfiguration replConfig = new ReplicatorConfiguration(
                 new URLEndpoint(new URI(uri)))
@@ -158,9 +165,13 @@ public class CouchBaseConfig {
         return database.createCollection("pruebas", "zkymed");
     }
 
+    public Collection getCollectionOnline(String colletionName,String scopeName) throws CouchbaseLiteException {
+        Database database = new Database("mydb");
+        return database.getCollection(colletionName, scopeName);
+    }
+
     public Collection getCollectionOnline() throws CouchbaseLiteException {
         Database database = new Database("mydb");
-        System.out.println("hotel");
         return database.getCollection("hotel", "inventory");
     }
 

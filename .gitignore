@@ -31,3 +31,8 @@ build/
 
 ### VS Code ###
 .vscode/
+
+
+### Local BD ###
+mydb.cblite2
+CouchbaseLiteTemp
