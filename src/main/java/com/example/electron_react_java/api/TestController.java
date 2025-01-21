@@ -2,9 +2,11 @@ package com.example.electron_react_java.api;
 
 import com.couchbase.lite.Collection;
 import com.couchbase.lite.CouchbaseLiteException;
+import com.example.electron_react_java.models.CollectioNames;
 import com.example.electron_react_java.models.TestData;
 import com.example.electron_react_java.services.CouchBaseConfig;
 import com.example.electron_react_java.services.CouchBaseService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,10 +21,13 @@ import java.util.Map;
 @CrossOrigin(origins = "*")
 @RequestMapping("/api")
 public class TestController {
-    private final TestService testService;
+    private final CouchBaseService couchBaseService;
+    private final CouchBaseConfig base;
 
-    public TestController(TestService testService) {
-        this.testService = testService;
+    @Autowired
+    public TestController(CouchBaseService couchBaseService, CouchBaseConfig base) {
+        this.couchBaseService = couchBaseService;
+        this.base = base;
     }
 
     // tag::get-aggregate-root[]
@@ -60,7 +65,6 @@ public class TestController {
     @GetMapping("/testSyncLocal")
     public ResponseEntity<String> greeting5() throws CouchbaseLiteException, URISyntaxException {
         String greeting = "sincronizando";
-        CouchBaseConfig base = new CouchBaseConfig();
         Collection collection = base.getCollection();
         try {
             // Intentar iniciar la replicación
@@ -79,7 +83,6 @@ public class TestController {
         String greeting = "sincronizando";
         String scopeName = names.getScopeName();
         String collectionName = names.getCollectionName();
-        CouchBaseConfig base = new CouchBaseConfig();
         Collection collection = base.getCollectionOnline(collectionName,scopeName);
         try {
             // Intentar iniciar la replicación
@@ -97,7 +100,6 @@ public class TestController {
     @GetMapping("/createBase")
     public ResponseEntity<String> greeting6() throws CouchbaseLiteException, URISyntaxException {
         String greeting = "Creando base de datos";
-        CouchBaseConfig base = new CouchBaseConfig();
         try {
             // Intentar iniciar la replicación
             base.getStarted();
@@ -110,34 +112,19 @@ public class TestController {
         }
     }
 
-    @GetMapping("/createBaseOnline")
-    public ResponseEntity<String> greeting8() throws CouchbaseLiteException, URISyntaxException {
-        String greeting = "Creando base de datos";
-        CouchBaseConfig base = new CouchBaseConfig();
+    //Crea la colección y el scope en la base de datos local
+    @PostMapping("/createCollectionLocal")
+    public ResponseEntity<String> createCollectionLocal(@RequestBody CollectioNames bodyData) throws CouchbaseLiteException, URISyntaxException {
         try {
+            String scopeName = bodyData.getScopeName();
+            String collectionName = bodyData.getCollectionName();
             // Intentar iniciar la replicación
-            base.getStartedOnline();
+            base.getStartedOnline(scopeName,collectionName);
             // Si se inicia correctamente, devolver éxito
             return new ResponseEntity<>("Base created successfully", HttpStatus.OK);
         } catch (Exception e) {
             // Manejar cualquier excepción lanzada y devolver un error con detalle
             String errorMessage = "Failed to create base: " + e.getMessage();
-            return new ResponseEntity<>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/createUser")
-    public ResponseEntity<String> greeting10() throws CouchbaseLiteException, URISyntaxException {
-        String greeting = "Creando usuario";
-        CouchBaseConfig base = new CouchBaseConfig();
-        try {
-            // Intentar iniciar la replicación
-            //base.createUser();
-            // Si se inicia correctamente, devolver éxito
-            return new ResponseEntity<>("User created successfully", HttpStatus.OK);
-        } catch (Exception e) {
-            // Manejar cualquier excepción lanzada y devolver un error con detalle
-            String errorMessage = "Failed to create user: " + e.getMessage();
             return new ResponseEntity<>(errorMessage, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -150,8 +137,7 @@ public class TestController {
     public ResponseEntity<List<Map<String, Object>> > greeting9(@RequestBody CollectioNames names) throws CouchbaseLiteException, URISyntaxException {
         String scopeName = names.getScopeName();
         String collectionName = names.getCollectionName();
-        CouchBaseService service = new CouchBaseService();
-        List<Map<String, Object>> data = service.viewDatabase(scopeName,collectionName);
+        List<Map<String, Object>> data = couchBaseService.viewDatabase(scopeName,collectionName);
 
         return new ResponseEntity<>(data, HttpStatus.OK);
     }
@@ -161,13 +147,32 @@ public class TestController {
      * */
     @PostMapping("/insertDocumentOnline")
     public ResponseEntity<String> greeting11(@RequestBody TestData data) throws CouchbaseLiteException {
-        CouchBaseService service = new CouchBaseService();
         String scopeName = data.getNames().getScopeName();
         String collectionName = data.getNames().getCollectionName();
-        service.insertDocument(data.toMap(),scopeName,collectionName);
+        couchBaseService.insertDocument(data.toMap(),scopeName,collectionName);
 
         String greeting = "Documento insertado en " + scopeName;
         return new ResponseEntity<>(greeting, HttpStatus.OK);
+    }
+
+    //Busca por nombre
+    @GetMapping("/findByName")
+    public ResponseEntity<List<Map<String, Object>>> findByName(@RequestParam String name) throws CouchbaseLiteException {
+        List<Map<String, Object>> data = couchBaseService.searchDocument("name",name,"inventory","hotel");
+        if (data == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // Devuelve 404 si no hay contenido
+        }
+        return new ResponseEntity<>(data, HttpStatus.OK);
+    }
+
+    //Busca por edad
+    @GetMapping("/findByAge")
+    public ResponseEntity<List<Map<String, Object>>> findByAge(@RequestParam Integer age) throws CouchbaseLiteException {
+        List<Map<String, Object>> data = couchBaseService.searchDocument("age",age,"inventory","hotel");
+        if (data == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND); // Devuelve 404 si no hay contenido
+        }
+        return new ResponseEntity<>(data, HttpStatus.OK);
     }
 
 }

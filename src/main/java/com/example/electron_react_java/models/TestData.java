@@ -1,7 +1,5 @@
 package com.example.electron_react_java.models;
 
-import com.example.electron_react_java.api.CollectioNames;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,6 +7,7 @@ public class TestData {
     private CollectioNames names;
     private String name;
     private int age;
+    private String last_name;
 
     // Constructor vacío (obligatorio para la deserialización)
     public void MyData() {}
@@ -36,6 +35,14 @@ public class TestData {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public String getLast_name() {
+        return last_name;
+    }
+
+    public void setLast_name(String last_name) {
+        this.last_name = last_name;
     }
 
     public Map<String, Object> toMap() {
